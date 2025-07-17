@@ -47,7 +47,9 @@ public class EnemyEntity : MonoBehaviour {
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision) {
-        Debug.Log("Attack");
+    private void OnTriggerStay2D(Collider2D collision) {
+        if (collision.transform.TryGetComponent(out Player player)) {
+            player.TakeDamage(transform, _skeleton.enemyDamageAmount);
+        }
     }
 }

@@ -11,7 +11,9 @@ public class ActiveWeapon : MonoBehaviour
     }
     
     private void Update() {
-        ChangeSwordDirection();
+        if (Player.Instance.IsAlive()) {
+            ChangeSwordDirection();
+        }
     }
 
     

@@ -3,19 +3,33 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerVisual: MonoBehaviour {
-    private Animator animator;
+    private Animator _animator;
     private SpriteRenderer spriteRenderer;
+    private FlashBlink _flashBlink;
     
     private const string IS_RUNNING = "isRunning";
+    private const string IS_DIE = "IsDie";
 
     private void Awake() {
-        animator = GetComponent<Animator>();
+        _animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        _flashBlink = GetComponent<FlashBlink>();
+    }
+
+    private void Start() {
+        Player.Instance.OnPlayerDeath += Player_OnPlayerDeath;
+    }
+
+    private void Player_OnPlayerDeath(object sender, EventArgs e) {
+        _animator.SetBool(IS_DIE, true);
+        _flashBlink.StopBlinking();
     }
 
     private void Update() {
-        animator.SetBool(IS_RUNNING, Player.Instance.IsRunning());
-        ChangePlayerFacingDirection();
+        _animator.SetBool(IS_RUNNING, Player.Instance.IsRunning());
+        if (Player.Instance.IsAlive()) {
+            ChangePlayerFacingDirection();
+        }
     }
 
     private void ChangePlayerFacingDirection() {

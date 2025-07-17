@@ -1,63 +1,108 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [SelectionBase]
-
+[RequireComponent(typeof(Rigidbody2D))]
 public class Player: MonoBehaviour {
 
     public static Player Instance { get; private set; }
+    public event EventHandler OnPlayerDeath;
+    public event EventHandler OnFlashBlink;
+    private bool _isAlive;
+    public bool IsAlive() => _isAlive;
+
     
     private Rigidbody2D rb;
 
-    [SerializeField] private float moveSpeed = 5f;
-    private float minMovingSpeed = 0.1f;
-    private Vector2 inputVector;
-    private bool isRunning = false;
+    [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private int _maxHealth = 10;
+    [SerializeField] private float _damageRecoveryTime = 0.5f;
+    private float _minMovingSpeed = 0.1f;
+    private Vector2 _inputVector;
+    private bool _isRunning = false;
+    private int _currentHealth;
+    private bool _canTakeDamage;
     
-    private Camera mainCamera;
+    private Camera _mainCamera;
+    private KnockBack _knockBack;
     
     private void Awake() {
         Instance = this;
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
-        mainCamera = Camera.main;
+        _mainCamera = Camera.main;
+        _knockBack = GetComponent<KnockBack>();
     }
 
     private void Start() {
         GameInput.Instance.OnPlayerAttack += GameInput_OnPlayerAttack;
+        _currentHealth = _maxHealth;
+        _canTakeDamage = true;
+        _isAlive = true;
+    }
+    
+    private void Update() {
+        _inputVector = GameInput.Instance.GetMovementVector();
+    }
+    
+    public bool IsRunning() {
+        return _isRunning;
+    }
+    
+    public Vector3 GetPlayerPosition() {
+        Vector3 playerPos = _mainCamera.WorldToScreenPoint(transform.position);
+        return playerPos;
     }
 
+    public void TakeDamage(Transform damageSource, int damage) {
+        if (_canTakeDamage && _isAlive) {
+            _canTakeDamage = false;
+            _knockBack.GetKnockedBack(damageSource);
+            _currentHealth = Math.Max(0, _currentHealth -= damage);
+            StartCoroutine(DamageRecoveryTimer());
+            OnFlashBlink?.Invoke(this, EventArgs.Empty);
+        }
+        
+        DetectDeath();
+    }
+
+    private IEnumerator DamageRecoveryTimer() {
+        yield return new WaitForSeconds(_damageRecoveryTime);
+        _canTakeDamage = true;
+    }
+    
     private void GameInput_OnPlayerAttack(object sender, System.EventArgs e) {
         ActiveWeapon.Instance.GetActiveWeapon().Attack();
     }
     
-    private void Update() {
-        inputVector = GameInput.Instance.GetMovementVector();
-    }
-    
     private void FixedUpdate() {
-        HandeMovement();
+        if (_knockBack.IsGetKnockedBack) {
+            return;
+        }
+        HandleMovement();
     }
 
-    private void HandeMovement() {
-        rb.MovePosition(rb.position + inputVector * (moveSpeed * Time.fixedDeltaTime));
+    private void HandleMovement() {
+        rb.MovePosition(rb.position + _inputVector * (_moveSpeed * Time.fixedDeltaTime));
 
-        if (Math.Abs(inputVector.x) > minMovingSpeed || Math.Abs(inputVector.y) > minMovingSpeed) {
-            isRunning = true;
+        if (Math.Abs(_inputVector.x) > _minMovingSpeed || Math.Abs(_inputVector.y) > _minMovingSpeed) {
+            _isRunning = true;
         } else {
-            isRunning = false;
+            _isRunning = false;
         }
         
     }
 
-    public bool IsRunning() {
-        return isRunning;
-    }
-    
-    public Vector3 GetPlayerPosition() {
-        Vector3 playerPos = mainCamera.WorldToScreenPoint(transform.position);
-        return playerPos;
+    private void DetectDeath() {
+        if (_currentHealth == 0 && _isAlive) {
+            _isAlive = false;
+            _canTakeDamage = false;
+            _knockBack.StopKnockBackMovement();
+            OnPlayerDeath?.Invoke(this, EventArgs.Empty);
+            GameInput.Instance.DisableMovement();
+        }
     }
     
 }
