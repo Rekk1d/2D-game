@@ -34,6 +34,9 @@ public class GameInput: MonoBehaviour {
     private void PlayerAttack_started(InputAction.CallbackContext obj) {
         OnPlayerAttack?.Invoke(this, EventArgs.Empty);
     }
-    
+
+    private void OnDestroy() {
+        playerInputActions.Combat.Attack.started -= PlayerAttack_started;
+    }
 }
 

@@ -41,4 +41,8 @@ public class PlayerVisual: MonoBehaviour {
         }
         spriteRenderer.flipX = mousePos.x < playerPos.x || rightStick.x < 0f;
     }
+
+    private void OnDestroy() {
+        Player.Instance.OnPlayerDeath -= Player_OnPlayerDeath;
+    }
 }

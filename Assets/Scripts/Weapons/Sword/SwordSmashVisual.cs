@@ -17,4 +17,8 @@ public class SwordSmashVisual : MonoBehaviour {
     private void Sword_OnSwordSwing(object sender, EventArgs e) {
         animator.SetTrigger(ATTACK);
     }
+
+    private void OnDestroy() {
+        sword.OnSwordSwing -= Sword_OnSwordSwing;
+    }
 }

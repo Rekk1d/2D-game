@@ -9,7 +9,8 @@ public class EnemyEntity : MonoBehaviour {
     public event EventHandler OnDie;
     [SerializeField] private Skeleton _skeleton;
     private int _currentHealth;
-
+    private bool _isAttacking = false;
+    
     private PolygonCollider2D _polygonCollider2D;
     private BoxCollider2D _boxCollider2D;
     private EnemyAI _enemyAI;
@@ -32,10 +33,12 @@ public class EnemyEntity : MonoBehaviour {
     
     public void AttackColliderTurnOff() {
         _polygonCollider2D.enabled = false;
+        _isAttacking = false;
     }
 
     public void AttackColliderTurnOn() {
         _polygonCollider2D.enabled = true;
+        _isAttacking = true;
     }
 
     private void DetectDeath() {
@@ -48,8 +51,12 @@ public class EnemyEntity : MonoBehaviour {
     }
 
     private void OnTriggerStay2D(Collider2D collision) {
+        if (!_isAttacking) {
+            return;
+        }
         if (collision.transform.TryGetComponent(out Player player)) {
             player.TakeDamage(transform, _skeleton.enemyDamageAmount);
+            _isAttacking = false;
         }
     }
 }

@@ -104,5 +104,8 @@ public class Player: MonoBehaviour {
             GameInput.Instance.DisableMovement();
         }
     }
-    
+
+    private void OnDestroy() {
+        GameInput.Instance.OnPlayerAttack -= GameInput_OnPlayerAttack;
+    }
 }

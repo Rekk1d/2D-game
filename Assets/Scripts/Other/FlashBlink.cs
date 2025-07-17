@@ -54,4 +54,10 @@ public class FlashBlink :  MonoBehaviour {
         _spriteRenderer.material = _blinkMaterial;
     }
     
+    private void OnDestroy() {
+        if (_damagableObject is Player player) {
+            player.OnFlashBlink -= DamagableObject_OnFlashBlink;
+        }
+    }
+    
 }
